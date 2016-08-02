@@ -1,0 +1,29 @@
+<form action="importer.php" method="POST" enctype="multipart/form-data">
+	<div>
+		What are you importing?
+	</div>
+	<div style="margin-left: 10px;">
+		<select name="importType">
+			<option value="select">Select</option>
+			<option value="User">Users</option>
+			<option value="Weapon">Weapons</option>
+		</select>
+	</div>
+	<div>
+		Select a csv file to import
+	</div>
+	<div style="">
+		<input type="file" name="csv" />
+	</div>
+	<div>
+		<input type="submit" name="forward" value="Import" />
+		<input type="hidden" name="page" value="upload" />
+	</div>
+	<div id="error">
+		<? foreach ($errors as $error) { ?>
+		<div>
+			<?=$error?>
+		</div>
+		<? } ?>
+	</div>
+</form>
