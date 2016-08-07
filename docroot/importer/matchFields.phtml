@@ -1,0 +1,38 @@
+<div class="header">
+	 Let's match fields to ensure your import is 100% accurate.
+</div>
+<div class="matchTitle">
+	<div style="float: left; width: 25%; text-align: left; font-weight: bold;">
+		CSV Columns
+	</div>
+	<div style="float: left; width: 50%; text-align: center;">
+		<img src="../imgs/overArrow.jpg" style="width: 60px; height: 15px; margin-top: 3px;" />
+	</div>
+	<div style="float: left; width: 25%; text-align: right; font-weight: bold;">
+		Our Fields
+	</div>
+</div>
+<div class="matchBody">
+	<? foreach ($page->data['csvColumns'] as $csv) { ?>
+		<div class="matchRow">
+			<div style="clear: both; float: left;">
+				<?=$csv?>
+			</div>
+			<div style="float: right; margin-top: -1px;">
+				<select name="<?=$csv?>">
+					<? foreach ($page->data['tableColumns'] as $table) { ?>
+						<? $selected = stripos($table, $csv) !== FALSE ? "selected" : ""; ?>
+						<option value="<?=str_replace(' ', '', $table)?>" <?=$selected?>><?=$table?></option>
+					<? } ?>
+				</select>
+			</div>
+		</div>
+	<? } ?>
+	<div style="margin-top: 40px; font-size: 12pt;">
+		<span style="font-weight: bold;">Note:</span> Unmatched columns will not be imported.
+	</div>
+</div>
+
+<div>
+	<input type="hidden" name="page" value="match" />
+</div>

@@ -1,0 +1,22 @@
+<form action="importer.php" method="POST" enctype="multipart/form-data">
+	<div class="mainContainer">
+		<div class="title">
+			<div style="float: left;">
+				Csv Importer
+			</div>
+			<div style="float: right;">
+				<input class="submit" type="submit" value="<?=$page->button?>" />
+			</div>
+		</div>
+		
+		<? require_once($page->include); ?>
+		
+		<div class="errorHolder">
+			<? foreach ($page->errors as $error) { ?>
+				<div class="error">
+					<?=$error?>
+				</div>
+			<? } ?>
+		</div>
+	</div>
+</form>

@@ -1,1 +1,11 @@
-<?php
+<div style="margin-top: 75px; font-size: 18pt; font-weight: bold; text-align: center;">
+	<?=$page->importStatus?>
+</div>
+<div style="margin-top: 5px; font-size: 12pt; text-align: center;">
+	<?=$page->insertCounter?> records were successfully imported.
+</div>
+<? if (!empty($page->batchErrorMessage)) { ?>
+	<div>
+		<?=$this->batchErrorMessage?>
+	</div>
+<? } ?>
