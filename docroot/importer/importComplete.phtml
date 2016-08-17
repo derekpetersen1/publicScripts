@@ -2,10 +2,17 @@
 	<?=$page->importStatus?>
 </div>
 <div style="margin-top: 5px; font-size: 12pt; text-align: center;">
-	<?=$page->insertCounter?> records were successfully imported.
+	<?=$page->insertCounter?> record<?=$page->successPlural?> imported successfully. <?=$page->failedMessage?>
 </div>
-<? if (!empty($page->batchErrorMessage)) { ?>
-	<div>
-		<?=$this->batchErrorMessage?>
+<? if (!empty($page->tmp)) { ?>
+	<div style="margin-top: 75px; font-size: 10pt;">
+		<div style="margin-top: 5px;">
+			A csv file that only contains your failed imports is available
+			<a href="<?=WEB_PATH?>/download.php?fileType=csv&feature=importer&file=<?=$page->tmp?>">here</a>. Your Welcome.
+		</div>
+		<div>
+			In the downloaded file, fix the issues described below and try importing again.
+		</div>
+		<div style="margin-top: 20px;"></div>
 	</div>
 <? } ?>

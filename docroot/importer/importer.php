@@ -7,15 +7,20 @@ require_once('../../init.php');
  */
 class ImporterPage extends CsvImporter {
 	
-	// These are required to make this simple custom framework work
+	// These are always required to make this simple custom framework work. $template is the view.
 	public $include;
 	public $template = 'importer/importTemplate.phtml';
 	
-	// These are used in the view
+	private $startOver = '<input class="startOver" type="submit" name="startOver" value="< Reset" />';
+	
+	// These are used in the views
 	public $data;
-	public $button;
+	public $continueButton;
+	public $backButton;
 	public $importStatus = 'Import Complete!';
 	public $batchErrorMessage;
+	public $failedMessage;
+	public $successPlural;
 	
 	// Define errors
 	private $noFile = 'No file was selected to upload';
@@ -28,41 +33,96 @@ class ImporterPage extends CsvImporter {
 		//unset($_SESSION['importer']);
 		
 		$this->include = 'uploadFile.phtml';
-		$this->button = 'Next';
+		$this->continueButton = 'Next';
+		$this->backButton = '';
 		
 		if (!empty($_POST['page'])) {
-			if ($_POST['page'] == 'match') {
-				$completed = true;
-				$this->completeImport($_POST);
+			if (!empty($_POST['startOver'])) {
+				$this->killImport();
 			} else {
-				$this->prepareImport($_FILES['csv'], $_POST['importType']);
+				if ($_POST['page'] == 'match') {
+					$completed = true;
+					$this->completeImport($_POST);
+				} else {
+					$autoMatching = !empty($_POST['autoMatching']) ? true : false;
+					$this->prepareImport($_FILES['csv'], $_POST['importType'], $autoMatching);
+				}
 			}
 		}
 		
 		// This saves the state if the page is refreshed
-		if (isset($_SESSION['importer']) && empty($completed)) {
+		if (isset($_SESSION['importer']) && empty($completed) && empty($_POST['page'])) {
 			$this->data = $this->initializeCsvImport($_SESSION['importer']['file'], $_SESSION['importer']['table']);
+			
+			$this->data['csvColumns'] = $this->prepareMatchData($this->data['csvColumns'], $_SESSION['importer']['autoMatching']);
 			$this->include = 'matchFields.phtml';
-			$this->button = 'Finish';
+			$this->continueButton = 'Finish';
+			$this->backButton = $this->startOver;
 		}
 		
 		if (!empty($completed)) {
 			$this->include = 'importComplete.phtml';
-			$this->button = "Done";
+			$this->continueButton = "Done";
 		}
 	}
 	
-	private function prepareImport($file, $table) {
+	private function prepareImport($file, $table, $autoMatching) {
 		$this->validateUpload($file, $table);
 		
 		if (empty($this->errors)) {
 			try {
 				$this->data = $this->initializeCsvImport($file['tmp_name'], $table);
+				
+				$this->data['csvColumns'] = $this->prepareMatchData($this->data['csvColumns'], $autoMatching);
 				$this->include = 'matchFields.phtml';
+				$this->backButton = $this->startOver;
+				$_SESSION['importer']['autoMatching'] = $autoMatching;
 			} catch (Exception $e) {
 				$this->errors[] = $e->getMessage();
 			}
 		}
+	}
+	
+	private function prepareMatchData($csvColumns, $autoMatching) {
+		
+		// Determine if they've imported with this template before
+		if ($autoMatching === true) {
+			$tableColumns = $this->determineAutoMatches($csvColumns);
+		}
+		
+		// Loop through data to determine csv column image
+		$newData = array();
+		$counter = 0;
+		foreach ($csvColumns as $key => $csv) {
+			
+			if (!empty($tableColumns)) {
+				$image = 'blueCheckmark.png';
+				$title = 'Auto Matched';
+				$match = $tableColumns[$key];
+			} else {
+				// Determine image
+				$image = 'redX.png';
+				$title = 'Not Matched';
+				$match = '';
+				foreach ($this->data['tableColumns'] as $table) {
+					if (stripos($table, $csv) !== FALSE) {
+						$image = 'blueCheckmark.png';
+						$title = 'Auto Matched';
+						break;
+					}
+				}
+			}
+			
+			$newData[$counter]['DisplayName'] = $csv;
+			$newData[$counter]['Name'] = str_replace(' ', '', $csv);
+			$newData[$counter]['Image'] = $image;
+			$newData[$counter]['Title'] = $title;
+			$newData[$counter]['Match'] = $match;
+			
+			$counter++;
+		}
+		
+		return $newData;
 	}
 	
 	private function completeImport($post) {
@@ -75,16 +135,13 @@ class ImporterPage extends CsvImporter {
 			$matches[str_replace('_', ' ', $key)] = $value;
 		}
 		
+		// Import csv
 		$this->importCsv($matches);
 		
+		$this->successPlural = ($this->insertCounter === 1) ? '' : 's';
 		if (!empty($this->errors)) {
-			if ($this->insertCounter > 0) {
-				$this->importStatus = $this->partialErrorHeader;
-				$this->batchErrorMessage = $this->partialErrorMessage;
-			} else {
-				$this->importStatus = $this->completeErrorHeader;
-				$this->batchErrorMessage = $this->completeErrorMessage;
-			}
+			$this->importStatus = ($this->insertCounter > 0) ? $this->partialErrorHeader : $this->completeErrorHeader;
+			$this->failedMessage = ($this->failedCounter > 0) ? $this->failedCounter . ' failed.' : '';
 		}
 	}
 	
@@ -94,7 +151,9 @@ class ImporterPage extends CsvImporter {
 			$this->errors[] = $this->noFile;
 		} else {
 			// Validate file type
-			$fileType = $this->validateCsvFileType($file);
+			
+			$vft = new Utilities();
+			$fileType = $vft->validateCsvFileType($file);
 			if ($fileType === false) {
 				$this->errors[] = $this->nonCsvFile;
 			}
@@ -106,36 +165,13 @@ class ImporterPage extends CsvImporter {
 		}
 		
 		// Check that the import type selected wasn't tampered with or left empty
-		if (!in_array($table, $this->supportedTables)) {
+		if (!in_array($table, array_keys($this->supportedTables))) {
 			$this->errors[] = $this->badImportType;
 		}
 	}
-	
-	private function validateCsvFileType($file) {
-		// Get file extension
-		$temp = explode('.', $file['name']);
-		$extension = end($temp);
-		
-		// Get mime type
-		$fi = finfo_open(FILEINFO_MIME_TYPE);
-		$mime = finfo_file($fi, $file['tmp_name']);
-		finfo_close($fi);
-		
-		// Validate extension and mime type
-		$validated = true;
-		if (!in_array($extension, $this->supportedFileTypes)) {
-			$validated = false;
-		} else if (!in_array($mime, $this->supportedMimes)) {
-			$validated = false;
-		}
-		
-		return $validated;
-	}
-	
-	
-	
 }
 
+// This is required at the bottom of each view controller
 $page = new ImporterPage();
 $page->init();
 require_once(ABS_PATH.'/includes/page.phtml');

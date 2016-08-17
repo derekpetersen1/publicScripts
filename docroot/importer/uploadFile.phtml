@@ -4,16 +4,27 @@
 <div style="margin-top: 10px;">
 	<select name="importType">
 		<option value="select">Select</option>
-		<option value="User">Users</option>
-		<option value="Weapon">Weapons</option>
+		<? foreach ($page->supportedTables as $validName => $displayName) { ?>
+		<option value="<?=$validName?>"><?=$displayName?></option>
+		<? } ?>
 	</select>
 </div>
 <div class="header">
 	Select a csv file to import
 </div>
 <div style="margin-top: 10px;">
-	<input type="file" name="csv" />
+	<input type="file" name="csv" class="file" />
 </div>
-<div>
-	<input type="hidden" name="page" value="upload" />
+<div class="header" style="font-weight: bold;">
+	Import Memory
 </div>
+<div class="description" style="margin-top: 5px; padding-bottom: 30px;">
+	<div>
+		We remember prior imports to improve auto matching and speed up the import process.
+		Would you like Import Memory turned on for this import?
+	</div>
+	<div style="margin-top: 10px;">
+		<input type="checkbox" name="autoMatching" checked/> Import Memory
+	</div>
+</div>
+<input type="hidden" name="page" value="upload" />

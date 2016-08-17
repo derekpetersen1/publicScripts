@@ -8,9 +8,19 @@ select {
 	height: 25px;
 	width: 150px;
 }
-input {
+input.file {
 	height: 25px;
-	width: 100px;
+	width: 300px;
+}
+a:link {
+	color: blue;
+	text-decoration: underline;
+}
+a:visited {
+	color: blue;
+}
+a:active {
+	color: blue;
 }
 input.submit {
 	height: 25px;
@@ -19,6 +29,15 @@ input.submit {
 	color: white;
 	cursor: pointer;
 	border: 1px solid darkblue;
+	font-size: 12pt;
+}
+input.startOver {
+	height: 25px;
+	width: 80px;
+	background-color: #770000;
+	color: white;
+	cursor: pointer;
+	border: 1px solid #770000;
 	font-size: 12pt;
 }
 .mainContainer {
@@ -47,16 +66,19 @@ input.submit {
 }
 .matchRow {
 	height: 40px;
-	line-height: 40px;
 	border-bottom: 1px solid lightgray;
 	border-top: 1px solid lightgray;
 	font-size: 10pt;
 }
 .header {
 	margin-top: 25px;
+	font-size: 12pt;
+}
+.description {
+	font-size: 10pt;
 }
 .errorHolder {
-	margin-top: 35px;
+	margin-top: 5px;
 }
 .error {
 	margin-top: 5px;

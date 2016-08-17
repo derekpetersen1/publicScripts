@@ -15,16 +15,21 @@
 <div class="matchBody">
 	<? foreach ($page->data['csvColumns'] as $csv) { ?>
 		<div class="matchRow">
-			<div style="clear: both; float: left;">
-				<?=$csv?>
+			<div style="clear: both; float: left; line-height: 40px;">
+				<?=$csv['DisplayName']?>
 			</div>
-			<div style="float: right; margin-top: -1px;">
-				<select name="<?=$csv?>">
-					<? foreach ($page->data['tableColumns'] as $table) { ?>
-						<? $selected = stripos($table, $csv) !== FALSE ? "selected" : ""; ?>
-						<option value="<?=str_replace(' ', '', $table)?>" <?=$selected?>><?=$table?></option>
-					<? } ?>
-				</select>
+			<div style="float: right;">
+				<div style="float: right; padding-top: 8px;">
+					<select id="<?=$csv['Name']?>" name="<?=$csv['DisplayName']?>" class="matchSelect">
+						<? foreach ($page->data['tableColumns'] as $table) { ?>
+							<? $selected = ((stripos($table, $csv['DisplayName']) !== FALSE) || str_replace(' ', '', $table) == $csv['Match']) ? "selected" : ""; ?>
+							<option value="<?=str_replace(' ', '', $table)?>" <?=$selected?>><?=$table?></option>
+						<? } ?>
+					</select>
+				</div>
+				<div style="float: right; margin-right: 15px; width: 20px; height: 20px; padding-top: 10px;">
+					<img src="<?=WEB_PATH?>/imgs/<?=$csv['Image']?>" id="<?=$csv['Name']?>_image" style="width: 20px; height: 20px;" title="<?=$csv['Title']?>">
+				</div>
 			</div>
 		</div>
 	<? } ?>
