@@ -19,20 +19,20 @@ $(document).ready(function() {
 		}
 		
 		if (count > 0 && value != "NotMatched") {
+			alert('Oops! That field has already been matched.');
 			$("#" + id + " option[value='NotMatched']").attr('selected', true);
 			$(this).val('NotMatched');
-			$('#' + id + '_image').prop('src', '../imgs/redX.png');
-			$('#' + id + '_image').prop('title', 'Not Matched');
+			image.prop('src', '../imgs/redX.png');
+			image.prop('title', 'Not Matched');
 		} else {
 			if (value != "NotMatched") {
-				$('#' + id + '_image').prop('src', '../imgs/greenCheckmark.png');
-				$('#' + id + '_image').prop('title', 'User Matched');
+				image.prop('src', '../imgs/greenCheckmark.png');
+				image.prop('title', 'User Matched');
 			} else {
-				$('#' + id + '_image').prop('src', '../imgs/redX.png');
-				$('#' + id + '_image').prop('title', 'Not Matched');
+				image.prop('src', '../imgs/redX.png');
+				image.prop('title', 'Not Matched');
 			}
 		}
-
 	}); 
 	
 });

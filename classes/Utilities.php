@@ -11,6 +11,14 @@ class Utilities {
 	// Supported file mime types
 	private $supportedCsvMimes = array('application/vnd.ms-excel','text/plain','text/csv','text/tsv');
 	
+	/**
+	 * Utility to validate a passed csv file path
+	 *
+	 * @param array $file
+	 * @param bool $saved
+	 *
+	 * @returns bool $validated
+	 */
 	public function validateCsvFileType($file, $saved = false) {
 		// Get file extension
 		$base = $saved === false ? $file['name'] : basename($file);

@@ -34,6 +34,7 @@ class CsvImporter {
 	// Supported MySQL field types that are currently validated todo: Expand this list
 	private $ints = array('int', 'tinyint', 'bigint');
 	private $floats = array('float', 'double');
+	private $dates = array('date', 'datetime', 'timestamp');
 	
 	// Define errors
 	private $csvError = 'There was a problem reading the uploaded file. Please try again.';
@@ -42,6 +43,9 @@ class CsvImporter {
 	protected $partialErrorHeader = 'Er... Success! Sort of.';
 	protected $completeErrorHeader = 'Houston... we have a problem.';
 	
+	/**
+	 * Defines some of the page properties
+	 */
 	function __construct() {
 		$this->con = DatabaseConnect::getConnection();
 		$this->path = ABS_PATH.'/files/tmp/';
@@ -74,6 +78,14 @@ class CsvImporter {
 		return $data;
 	}
 	
+	/**
+	 * Extracts the csv columns from a passed file path
+	 *
+	 * @param array $file
+	 * @throws Exception
+	 * 
+	 * @returns array $csvColumns
+	 */
 	private function extractCsvColumns($file) {
 		
 		if (!$handle = fopen($file, 'r')) {
@@ -86,6 +98,19 @@ class CsvImporter {
 	
 	// NOTICE: Database calls should be put in a SEPARATE database class.
 	// For demonstration and simplicity's sake, it will go here.
+	/**
+	 * NOTICE: Database calls should be put in a SEPARATE database class.
+	 * For demonstration and simplicity's sake, it will go here.
+	 *
+	 * Gets the table columns related to the import and returns them properly formatted
+	 * 
+	 * @param string $table
+	 * @param bool $allInfo
+	 * @param bool $format
+	 * @throws Exception
+	 *
+	 * @returns array $fields
+	 */
 	private function extractTableColumns($table, $allInfo = false, $format = false) {
 		try {
 			$sql = "SHOW COLUMNS FROM " . $table;
@@ -119,6 +144,12 @@ class CsvImporter {
 		return $fields;
 	}
 	
+	/**
+	 * Saves a csv file
+	 *
+	 * @param array $file
+	 * @throws Exception
+	 */
 	private function saveTemporaryCsv($file) {
 		// Appending something unique about the user who is uploading the file before $temp would be safest here
 		$temp = mt_rand().'.csv';
@@ -131,6 +162,12 @@ class CsvImporter {
 		$_SESSION['importer']['file'] = $path;
 	}
 	
+	/**
+	 * Imports a csv file, tracks errors, counts successful and unsuccessful inserts
+	 *
+	 * @param array $matches
+	 * @throws Exception
+	 */
 	public function importCsv($matches) {
 		
 		// Verify that the table fields haven't been tampered with
@@ -171,6 +208,10 @@ class CsvImporter {
 				$violation = $this->checkFieldViolations($matchedTableColumn, $value, $type, $null);
 				if ($violation === true) {
 					$fieldViolations++;
+				}
+				if (in_array($type, $this->dates)) {
+					// Make a best attempt to format this to a time stamp
+					$value = date('Y-m-d H:i:s', strtotime($value));
 				}
 				
 				// Order each csv and table array so that the associated values are in the same left-to-right order
@@ -236,6 +277,7 @@ class CsvImporter {
 			}
 		}
 		
+		// Clean up leftover flagged rows
 		if (!empty($flaggedRows)) {
 			// Determine what to write
 			$this->tmp = basename($_SESSION['importer']['file']);
@@ -256,6 +298,15 @@ class CsvImporter {
 		$this->killImport();
 	}
 	
+	/**
+	 * Inserts the data into the database
+	 *
+	 * @param array $inserts
+	 * @param array $tableFields
+	 * @param array $validTableFields
+	 * 
+	 * @throws Exception
+	 */
 	private function insertData($inserts, $tableFields, $validTableFields) {
 		$validTableFieldNames = array_keys($validTableFields);
 		
@@ -286,7 +337,17 @@ class CsvImporter {
 		$this->con->commit();
 	}
 	
-	// This function ONLY CHECKS MySQL TYPES LISTED IN THE CORRELATING PROPERTY ARRAYS
+	/**
+	 * Checks for MySQL field type errors to reduce the chances of insert errors
+	 * This function ONLY CHECKS MySQL TYPES LISTED IN THE CORRELATING PROPERTY ARRAYS
+	 *
+	 * @param string $tableColumn
+	 * @param string $csvValue
+	 * @param string $type
+	 * @param string $null
+	 *
+	 * @returns bool $violation
+	 */
 	private function checkFieldViolations($tableColumn, $csvValue, $type, $null) {
 		$violation = false;
 		// MySQL likes to add stuff to the end of type - aka "(40)". We only want the letters.
@@ -324,11 +385,22 @@ class CsvImporter {
 		return $violation;
 	}
 	
+	/**
+	 * Deletes any saved upload files and unsets the session
+	 */
 	protected function killImport() {
 		unlink($_SESSION['importer']['file']);
 		unset($_SESSION['importer']);
 	}
 	
+	/**
+	 * See if there's a matching template to the file being imported
+	 *
+	 * @param array $csvColumns
+	 * @throws Exception
+	 * 
+	 * @returns array $matchingColumns
+	 */
 	protected function determineAutoMatches($csvColumns) {
 		$sql = 'SELECT * FROM AutoMatchTemplate';
 		$stmt = $this->con->query($sql, PDO::FETCH_ASSOC);
@@ -353,6 +425,12 @@ class CsvImporter {
 		return $matchingColumns;
 	}
 	
+	/**
+	 * Inserts an auto match template
+	 *
+	 * @param array $matches
+	 * @throws Exception
+	 */
 	private function saveAutoMatches($matches) {
 		// Check for duplicate
 		$csvFields = array_keys($matches);

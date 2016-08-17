@@ -1,7 +1,7 @@
 <div class="header">
 	What are you importing?
 </div>
-<div style="margin-top: 10px;">
+<div class="uploadFileInputHolders">
 	<select name="importType">
 		<option value="select">Select</option>
 		<? foreach ($page->supportedTables as $validName => $displayName) { ?>
@@ -12,18 +12,18 @@
 <div class="header">
 	Select a csv file to import
 </div>
-<div style="margin-top: 10px;">
+<div class="uploadFileInputHolders">
 	<input type="file" name="csv" class="file" />
 </div>
 <div class="header" style="font-weight: bold;">
 	Import Memory
 </div>
-<div class="description" style="margin-top: 5px; padding-bottom: 30px;">
+<div class="description">
 	<div>
 		We remember prior imports to improve auto matching and speed up the import process.
 		Would you like Import Memory turned on for this import?
 	</div>
-	<div style="margin-top: 10px;">
+	<div class="uploadFileInputHolders">
 		<input type="checkbox" name="autoMatching" checked/> Import Memory
 	</div>
 </div>

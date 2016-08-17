@@ -2,39 +2,39 @@
 	 Let's match fields to ensure your import is 100% accurate.
 </div>
 <div class="matchTitle">
-	<div style="float: left; width: 25%; text-align: left; font-weight: bold;">
+	<div class="matchColumns">
 		CSV Columns
 	</div>
-	<div style="float: left; width: 50%; text-align: center;">
-		<img src="../imgs/overArrow.jpg" style="width: 60px; height: 15px; margin-top: 3px;" />
+	<div class="matchArrowHolder">
+		<img src="../imgs/overArrow.jpg" class="matchArrow" />
 	</div>
-	<div style="float: left; width: 25%; text-align: right; font-weight: bold;">
+	<div class="matchTables">
 		Our Fields
 	</div>
 </div>
 <div class="matchBody">
 	<? foreach ($page->data['csvColumns'] as $csv) { ?>
 		<div class="matchRow">
-			<div style="clear: both; float: left; line-height: 40px;">
-				<?=$csv['DisplayName']?>
+			<div class="matchCsvDisplayName">
+				<?=$csv['displayName']?>
 			</div>
-			<div style="float: right;">
-				<div style="float: right; padding-top: 8px;">
-					<select id="<?=$csv['Name']?>" name="<?=$csv['DisplayName']?>" class="matchSelect">
+			<div class="rightFloat">
+				<div class="matchHolder">
+					<select id="<?=$csv['name']?>" name="<?=$csv['displayName']?>" class="matchSelect">
 						<? foreach ($page->data['tableColumns'] as $table) { ?>
-							<? $selected = ((stripos($table, $csv['DisplayName']) !== FALSE) || str_replace(' ', '', $table) == $csv['Match']) ? "selected" : ""; ?>
+							<? $selected = ((stripos($table, $csv['displayName']) !== FALSE) || str_replace(' ', '', $table) == $csv['match']) ? "selected" : ""; ?>
 							<option value="<?=str_replace(' ', '', $table)?>" <?=$selected?>><?=$table?></option>
 						<? } ?>
 					</select>
 				</div>
-				<div style="float: right; margin-right: 15px; width: 20px; height: 20px; padding-top: 10px;">
-					<img src="<?=WEB_PATH?>/imgs/<?=$csv['Image']?>" id="<?=$csv['Name']?>_image" style="width: 20px; height: 20px;" title="<?=$csv['Title']?>">
+				<div class="matchImageHolder">
+					<img src="<?=WEB_PATH?>/imgs/<?=$csv['image']?>" id="<?=$csv['name']?>_image" class="matchImage" title="<?=$csv['title']?>">
 				</div>
 			</div>
 		</div>
 	<? } ?>
-	<div style="margin-top: 40px; font-size: 12pt;">
-		<span style="font-weight: bold;">Note:</span> Unmatched columns will not be imported.
+	<div class="noteHolder">
+		<span class="bold">Note:</span> Unmatched columns will not be imported.
 	</div>
 </div>
 

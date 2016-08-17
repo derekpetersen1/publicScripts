@@ -28,9 +28,10 @@ class ImporterPage extends CsvImporter {
 	private $sizeLimitReached = 'The file to import must be no larger than 10 Mb. Split the file into smaller files and try again.';
 	private $badImportType = 'Please select a valid import type from the drop down menu.';
 	
+	/**
+	 * This method runs every time the page loads
+	 */
 	public function init() {
-		
-		//unset($_SESSION['importer']);
 		
 		$this->include = 'uploadFile.phtml';
 		$this->continueButton = 'Next';
@@ -66,6 +67,13 @@ class ImporterPage extends CsvImporter {
 		}
 	}
 	
+	/**
+	 * Prepares the csv importer for the match state
+	 *
+	 * @param array $file
+	 * @param string $table
+	 * @param bool $autoMatching
+	 */
 	private function prepareImport($file, $table, $autoMatching) {
 		$this->validateUpload($file, $table);
 		
@@ -83,6 +91,14 @@ class ImporterPage extends CsvImporter {
 		}
 	}
 	
+	/**
+	 * Formats all the csv column data to prepare it for the matching section
+	 *
+	 * @param array $csvColumns
+	 * @param bool $autoMatching
+	 *
+	 * @returns array $newData
+	 */
 	private function prepareMatchData($csvColumns, $autoMatching) {
 		
 		// Determine if they've imported with this template before
@@ -94,7 +110,6 @@ class ImporterPage extends CsvImporter {
 		$newData = array();
 		$counter = 0;
 		foreach ($csvColumns as $key => $csv) {
-			
 			if (!empty($tableColumns)) {
 				$image = 'blueCheckmark.png';
 				$title = 'Auto Matched';
@@ -113,11 +128,11 @@ class ImporterPage extends CsvImporter {
 				}
 			}
 			
-			$newData[$counter]['DisplayName'] = $csv;
-			$newData[$counter]['Name'] = str_replace(' ', '', $csv);
-			$newData[$counter]['Image'] = $image;
-			$newData[$counter]['Title'] = $title;
-			$newData[$counter]['Match'] = $match;
+			$newData[$counter]['displayName'] = $csv;
+			$newData[$counter]['name'] = str_replace(' ', '', $csv);
+			$newData[$counter]['image'] = $image;
+			$newData[$counter]['title'] = $title;
+			$newData[$counter]['match'] = $match;
 			
 			$counter++;
 		}
@@ -125,6 +140,11 @@ class ImporterPage extends CsvImporter {
 		return $newData;
 	}
 	
+	/**
+	 * Runs everything to complete the import and sets the messages that are displayed
+	 *
+	 * @param array $post
+	 */
 	private function completeImport($post) {
 		
 		$matches = array();
@@ -145,9 +165,15 @@ class ImporterPage extends CsvImporter {
 		}
 	}
 	
+	/**
+	 * Verifies that the csv upload is a proper csv file.
+	 *
+	 * @param array $file
+	 * @param string $table
+	 */
 	private function validateUpload($file, $table) {
 		// Check that the upload is a valid file
-		if (!is_uploaded_file($_FILES['csv']['tmp_name'])) {
+		if (!is_uploaded_file($file['tmp_name'])) {
 			$this->errors[] = $this->noFile;
 		} else {
 			// Validate file type
