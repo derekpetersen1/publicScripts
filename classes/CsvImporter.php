@@ -189,7 +189,6 @@ class CsvImporter {
 		$inserts = array();
 		$orderTableFields = array();
 		$flaggedRows = array();
-		$failedCounter = 0;
 		while (($data = fgetcsv($handle, 5000, ",")) !== FALSE) {
 			$row = array_combine($allCsvHeaders, $data);
 			
@@ -220,82 +219,92 @@ class CsvImporter {
 					$orderTableFields[] = $matchedTableColumn;
 				}
 			}
+			
 			if ($fieldViolations < 1) {
 				$inserts[] = $orderCsvFields;
 			} else {
 				$flaggedRows[] = $orderCsvFields;
-				$failedCounter = $failedCounter + 1;
 				
 				// We don't want this array to get too big
 				if (count($flaggedRows) === $this->batchSize) {
-					// Determine what to write
-					$this->tmp = basename($_SESSION['importer']['file']);
-					$fileExists = is_file($this->path."error_$this->tmp") ? true : false;
-					
-					// Append to end of csv error file
-					$errorHandle = fopen($this->path."error_$this->tmp",'a');
-					if ($fileExists === false) {
-						fputcsv($errorHandle, $allCsvHeaders);
-					}
-					foreach ($flaggedRows as $row) {
-						fputcsv($errorHandle, $row);
-					}
-					
-					fclose($errorHandle);
+					$this->putFlaggedRows($flaggedRows, $allCsvHeaders);
+					$flaggedRows = array();
 				}
 			}
 			
 			// This only runs for larger imports to speed up insertion time
 			if (count($inserts) === $this->batchSize) {
-				try {
-					$this->insertData($inserts, $orderTableFields, $validTableFields);
-					$this->insertCounter = $this->insertCounter + $this->batchSize;
-					$this->failedCounter = $this->failedCounter + $failedCounter;
-				} catch (Exception $e) {
-					$this->con->rollback();
-					$this->errors[] = $this->generalImportError;
-					$this->failedCounter = $this->failedCounter + (count($inserts) - $failedCounter);
-					$flaggedRows[] = array_merge($flaggedRows, $inserts);
-				}
+				$newFlaggedRows = $this->prepareInsert($inserts, $orderTableFields, $validTableFields);
+				$flaggedRows = array_merge($flaggedRows, $newFlaggedRows);
+				
 				$inserts = array();
-				$failedCounter = 0;
 			}
 		}
 		fclose($handle);
 		
-		// For small inserts, or to take care of the last batch that had less than the batch size
+		// For small inserts, or to take care of the last batch that had less than the max batch size
 		if (!empty($inserts)) {
-			try {
-				$this->insertData($inserts, $orderTableFields, $validTableFields);
-				$this->insertCounter = $this->insertCounter + count($inserts);
-				$this->failedCounter = $this->failedCounter + $failedCounter;
-			} catch (Exception $e) {
-				$this->con->rollback();
-				$this->errors[] = $this->generalImportError;
-				$this->failedCounter = $this->failedCounter + (count($inserts) - $failedCounter);
-				$flaggedRows = array_merge($flaggedRows, $inserts);
-			}
+			$newFlaggedRows = $this->prepareInsert($inserts, $orderTableFields, $validTableFields);
+			$flaggedRows = array_merge($flaggedRows, $newFlaggedRows);
 		}
 		
 		// Clean up leftover flagged rows
 		if (!empty($flaggedRows)) {
-			// Determine what to write
-			$this->tmp = basename($_SESSION['importer']['file']);
-			$fileExists = is_file($this->path."error_$this->tmp") ? true : false;
-			
-			// Append to end of csv error file
-			$errorHandle = fopen($this->path."error_$this->tmp",'a');
-			if ($fileExists === false) {
-				fputcsv($errorHandle, $allCsvHeaders);
-			}
-			foreach ($flaggedRows as $row) {
-				fputcsv($errorHandle, $row);
-			}
-			
-			fclose($errorHandle);
+			$this->putFlaggedRows($flaggedRows, $allCsvHeaders);
 		}
 		
 		$this->killImport();
+	}
+	
+	/**
+	 * Prepares data and sends it to be inserted into the database
+	 *
+	 * @param array $inserts
+	 * @param array $orderTableFields
+	 * @param array $validTableFields
+	 *
+	 * @returns array $newFlaggedRows
+	 */
+	private function prepareInsert($inserts, $orderTableFields, $validTableFields) {
+		$newFlaggedRows = array();
+		
+		try {
+			$this->insertData($inserts, $orderTableFields, $validTableFields);
+			$this->insertCounter = $this->insertCounter + count($inserts);
+		} catch (Exception $e) {
+			$this->con->rollback();
+			$this->errors[] = $this->generalImportError;
+			$newFlaggedRows = $inserts;
+		}
+		
+		return $newFlaggedRows;
+	}
+	
+	/**
+	 * Saves csv rows with errors to an error file
+	 *
+	 * @param array $flaggedRows
+	 * @param array $allCsvHeaders
+	 *
+	 */
+	private function putFlaggedRows($flaggedRows, $allCsvHeaders) {
+		// Determine what to write
+		$this->tmp = basename($_SESSION['importer']['file']);
+		$fileExists = is_file($this->path."error_$this->tmp") ? true : false;
+		
+		// Append to end of csv error file
+		$errorHandle = fopen($this->path."error_$this->tmp",'a');
+		if ($fileExists === false) {
+			fputcsv($errorHandle, $allCsvHeaders);
+		}
+		foreach ($flaggedRows as $row) {
+			fputcsv($errorHandle, $row);
+		}
+		
+		fclose($errorHandle);
+		
+		// Reset flagged rows
+		$this->failedCounter = $this->failedCounter + count($flaggedRows);
 	}
 	
 	/**

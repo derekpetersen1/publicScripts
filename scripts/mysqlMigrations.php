@@ -8,7 +8,7 @@ $sql = "CREATE TABLE `AutoMatch` (
   `AutoMatchID` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `DateCreated` datetime NOT NULL,
   PRIMARY KEY (`AutoMatchID`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;";
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
 $con->exec($sql);
 
 $sql = "CREATE TABLE `AutoMatchTemplate` (
@@ -17,7 +17,7 @@ $sql = "CREATE TABLE `AutoMatchTemplate` (
   `CsvField` varchar(40) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `TableField` varchar(40) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   PRIMARY KEY (`AutoMatchTemplateID`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;";
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
 $con->exec($sql);
 
 $sql = "CREATE TABLE `User` (
@@ -31,5 +31,5 @@ $sql = "CREATE TABLE `User` (
   `Score` float NOT NULL,
   `DateCreated` datetime NOT NULL,
   PRIMARY KEY (`UserID`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;";
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
 $con->exec($sql);

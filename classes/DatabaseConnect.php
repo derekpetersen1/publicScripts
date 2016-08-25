@@ -13,14 +13,23 @@ class DatabaseConnect {
 	 */
 	public static function getConnection($db = null) {
 		
-		$db = "database";
+		// EDIT
+		// <!--
+		$host = 'localhost';
+		$db = 'database';
+		$user = 'root';
+		$pass = 'root';
+		// -->
 		
+		// DO NOT EDIT
+		// <!--
 		try {
-			$con = new PDO('mysql:host=localhost;dbname='.$db, 'root', 'root');
+			$con = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
 			$con->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		} catch (Exception $e) {
 			$con = null;
 		}
+		// -->
 		
 		return $con;
 	}

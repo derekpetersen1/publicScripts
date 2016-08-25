@@ -8,15 +8,16 @@ require_once('../../init.php');
 class ImporterPage extends CsvImporter {
 	
 	// These are always required to make this simple custom framework work. $template is the view.
-	public $include;
+	public $include = 'uploadFile.phtml';
 	public $template = 'importer/importTemplate.phtml';
 	
 	private $startOver = '<input class="startOver" type="submit" name="startOver" value="< Reset" />';
+	private $completed = false;
 	
 	// These are used in the views
 	public $data;
-	public $continueButton;
-	public $backButton;
+	public $continueButton = 'Next';
+	public $backButton = '';
 	public $importStatus = 'Import Complete!';
 	public $batchErrorMessage;
 	public $failedMessage;
@@ -32,38 +33,32 @@ class ImporterPage extends CsvImporter {
 	 * This method runs every time the page loads
 	 */
 	public function init() {
-		
-		$this->include = 'uploadFile.phtml';
-		$this->continueButton = 'Next';
-		$this->backButton = '';
-		
 		if (!empty($_POST['page'])) {
-			if (!empty($_POST['startOver'])) {
-				$this->killImport();
+			$this->determineState($_POST, $_FILES);
+		}
+		
+		// This saves the state if the page is refreshed on the matching page
+		if (isset($_SESSION['importer']) && $this->completed === false && empty($_POST['page'])) {
+			$this->prepareImport($_SESSION['importer']['file'], $_SESSION['importer']['table'], $_SESSION['importer']['autoMatching']);
+		}
+	}
+	
+	/**
+	 * Determines the current state of the importer and moves it towards the next state
+	 *
+	 * @param array $post
+	 * @param array $files
+	 */
+	private function determineState($post, $files) {
+		if (!empty($post['startOver'])) {
+			$this->killImport();
+		} else {
+			if ($post['page'] == 'match') {
+				$this->completeImport($post);
 			} else {
-				if ($_POST['page'] == 'match') {
-					$completed = true;
-					$this->completeImport($_POST);
-				} else {
-					$autoMatching = !empty($_POST['autoMatching']) ? true : false;
-					$this->prepareImport($_FILES['csv'], $_POST['importType'], $autoMatching);
-				}
+				$autoMatching = !empty($post['autoMatching']) ? true : false;
+				$this->prepareImport($files['csv'], $post['importType'], $autoMatching);
 			}
-		}
-		
-		// This saves the state if the page is refreshed
-		if (isset($_SESSION['importer']) && empty($completed) && empty($_POST['page'])) {
-			$this->data = $this->initializeCsvImport($_SESSION['importer']['file'], $_SESSION['importer']['table']);
-			
-			$this->data['csvColumns'] = $this->prepareMatchData($this->data['csvColumns'], $_SESSION['importer']['autoMatching']);
-			$this->include = 'matchFields.phtml';
-			$this->continueButton = 'Finish';
-			$this->backButton = $this->startOver;
-		}
-		
-		if (!empty($completed)) {
-			$this->include = 'importComplete.phtml';
-			$this->continueButton = "Done";
 		}
 	}
 	
@@ -75,11 +70,14 @@ class ImporterPage extends CsvImporter {
 	 * @param bool $autoMatching
 	 */
 	private function prepareImport($file, $table, $autoMatching) {
-		$this->validateUpload($file, $table);
+		if (!empty($file['tmp_name'])) {
+			$this->validateUpload($file, $table);
+			$file = $file['tmp_name'];
+		}
 		
 		if (empty($this->errors)) {
 			try {
-				$this->data = $this->initializeCsvImport($file['tmp_name'], $table);
+				$this->data = $this->initializeCsvImport($file, $table);
 				
 				$this->data['csvColumns'] = $this->prepareMatchData($this->data['csvColumns'], $autoMatching);
 				$this->include = 'matchFields.phtml';
@@ -146,6 +144,7 @@ class ImporterPage extends CsvImporter {
 	 * @param array $post
 	 */
 	private function completeImport($post) {
+		$this->completed = true;
 		
 		$matches = array();
 		foreach ($post as $key => $value) {
@@ -163,6 +162,9 @@ class ImporterPage extends CsvImporter {
 			$this->importStatus = ($this->insertCounter > 0) ? $this->partialErrorHeader : $this->completeErrorHeader;
 			$this->failedMessage = ($this->failedCounter > 0) ? $this->failedCounter . ' failed.' : '';
 		}
+		
+		$this->include = 'importComplete.phtml';
+		$this->continueButton = 'Done';
 	}
 	
 	/**
