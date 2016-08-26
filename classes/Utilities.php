@@ -5,7 +5,7 @@
  */
 class Utilities {
 	
-	// Supported file types
+	// Supported csv file types
 	private $supportedCsvFileTypes = array('csv','txt');
 	
 	/**
@@ -16,7 +16,7 @@ class Utilities {
 	 *
 	 * @returns bool $validated
 	 */
-	public function validateCsvFileType($file, $saved = false) {
+	public function validateCsvFile($file, $saved = false) {
 		$validated = true;
 		
 		// Get file extension

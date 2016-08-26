@@ -181,7 +181,7 @@ class ImporterPage extends CsvImporter {
 			// Validate file type
 			
 			$vft = new Utilities();
-			$fileType = $vft->validateCsvFileType($file);
+			$fileType = $vft->validateCsvFile($file);
 			if ($fileType === false) {
 				$this->errors[] = $this->nonCsvFile;
 			}
